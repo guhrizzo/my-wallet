@@ -10,6 +10,7 @@ import {
   orderBy,
   deleteDoc,
   doc,
+  Timestamp,
 } from "firebase/firestore";
 import {
   Plus,
@@ -22,6 +23,9 @@ import {
   Trash2,
   Eye,
   EyeOff,
+  ChevronLeft,
+  ChevronRight,
+  Calendar as CalendarIcon
 } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
@@ -29,6 +33,14 @@ import { useAuth } from "@/context/AuthContext";
 import AddTransactionModal from "@/app/components/AddTransactionModal";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { 
+  format, 
+  startOfMonth, 
+  endOfMonth, 
+  addMonths, 
+  subMonths 
+} from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface Transaction {
   id: string;
@@ -42,7 +54,9 @@ export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [isPrivate, setIsPrivate] = useState(false); // Estado de privacidade
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [currentDate, setCurrentDate] = useState(new Date()); // Estado para a data atual
+  
   const [totals, setTotals] = useState({
     income: 0,
     expense: 0,
@@ -52,19 +66,23 @@ export default function Dashboard() {
   const [filter, setFilter] = useState<"all" | "income" | "expense">("all");
   const router = useRouter();
 
-  // Carrega preferência de privacidade do localStorage
   useEffect(() => {
     const saved = localStorage.getItem("privacy_mode");
     if (saved) setIsPrivate(saved === "true");
   }, []);
 
-  // Salva preferência de privacidade
   const togglePrivacy = () => {
     const newValue = !isPrivate;
     setIsPrivate(newValue);
     localStorage.setItem("privacy_mode", newValue.toString());
-    toast(newValue ? "Valores ocultos" : "Valores visíveis", { icon: newValue ? <EyeOff size={16} /> : <Eye size={16} /> });
+    toast(newValue ? "Valores ocultos" : "Valores visíveis", { 
+      icon: newValue ? <EyeOff size={16} /> : <Eye size={16} /> 
+    });
   };
+
+  // Funções para navegar entre os meses
+  const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
+  const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
 
   useEffect(() => {
     if (authLoading) return;
@@ -73,9 +91,15 @@ export default function Dashboard() {
       return;
     }
 
+    // Definir início e fim do mês selecionado
+    const start = startOfMonth(currentDate);
+    const end = endOfMonth(currentDate);
+
     const q = query(
       collection(db, "transactions"),
       where("userId", "==", user.uid),
+      where("date", ">=", Timestamp.fromDate(start)),
+      where("date", "<=", Timestamp.fromDate(end)),
       orderBy("date", "desc")
     );
 
@@ -104,7 +128,7 @@ export default function Dashboard() {
     );
 
     return () => unsubscribe();
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, currentDate]); // Adicionado currentDate como dependência
 
   const handleDelete = async (id: string) => {
     try {
@@ -123,7 +147,7 @@ export default function Dashboard() {
 
   if (authLoading || isInitialLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ repeat: Infinity, duration: 1 }}
@@ -154,7 +178,7 @@ export default function Dashboard() {
             </button>
             <button
               onClick={handleLogout}
-              className="p-3 rounded-xl hover:bg-red-50 text-red-500 transition border border-transparent hover:border-red-100"
+              className="p-3 rounded-xl hover:bg-red-50 text-red-500 cursor-pointer transition border border-transparent hover:border-red-100"
             >
               <LogOut size={20} />
             </button>
@@ -162,11 +186,38 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto p-6 space-y-8">
+      <main className="max-w-5xl mx-auto p-6 space-y-6">
+        
+        {/* SELETOR DE MÊS */}
+        <section className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200 flex items-center justify-between">
+          <button 
+            onClick={prevMonth}
+            className="p-2 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer text-slate-400"
+          >
+            <ChevronLeft size={24} />
+          </button>
+
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+              <CalendarIcon size={20} />
+            </div>
+            <span className="font-bold text-slate-800 text-lg capitalize">
+              {format(currentDate, "MMMM yyyy", { locale: ptBR })}
+            </span>
+          </div>
+
+          <button 
+            onClick={nextMonth}
+            className="p-2 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer text-slate-400"
+          >
+            <ChevronRight size={24} />
+          </button>
+        </section>
+
         {/* CARDS */}
-        <section className="grid md:grid-cols-3 gap-6">
+        <section className="grid md:grid-cols-3 text-slate-950 gap-6">
           <PremiumCard
-            title="Saldo Total"
+            title={`Saldo de ${format(currentDate, "MMMM", { locale: ptBR })}`}
             value={totals.balance}
             icon={<Wallet />}
             highlight
@@ -193,7 +244,7 @@ export default function Dashboard() {
           <div className="p-6 flex flex-col sm:flex-row justify-between items-center gap-4 border-b">
             <h3 className="font-bold text-slate-800 flex gap-2 items-center">
               <History size={18} />
-              Atividade
+              Atividade do Mês
             </h3>
 
             <div className="flex bg-slate-100 p-1 rounded-xl w-full sm:w-auto">
@@ -219,9 +270,12 @@ export default function Dashboard() {
                 <motion.div 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="py-20 text-center text-slate-400 font-semibold"
+                  className="py-20 text-center flex flex-col items-center gap-3"
                 >
-                  Nenhuma transação encontrada
+                  <div className="p-4 bg-slate-50 rounded-full text-slate-300">
+                    <History size={40} />
+                  </div>
+                  <p className="text-slate-400 font-semibold text-lg">Sem registros neste período</p>
                 </motion.div>
               ) : (
                 filteredTransactions.map((t) => (
@@ -234,14 +288,14 @@ export default function Dashboard() {
                     className="p-5 flex justify-between items-center hover:bg-slate-50 transition group"
                   >
                     <div className="flex items-center gap-4">
-                       <div className={`p-3 rounded-xl ${t.type === 'income' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-                          {t.type === 'income' ? <TrendingUp size={18} /> : <ArrowDownCircle size={18} />}
+                       <div className={`p-3 rounded-xl ${t.type === 'income' ? 'bg-green-50 text-green-600 border border-green-300/40'  : 'bg-red-50 text-red-600 border border-red-100'}`}>
+                          {t.type === 'income' ? <TrendingUp size={18} className=""/> : <ArrowDownCircle size={18} />}
                        </div>
                       <div>
                         <p className="font-bold text-slate-800">{t.description}</p>
                         <p className="text-xs text-slate-400 font-medium">
                           {t.date?.seconds
-                            ? new Date(t.date.seconds * 1000).toLocaleDateString("pt-BR")
+                            ? format(new Date(t.date.seconds * 1000), "dd 'de' MMMM", { locale: ptBR })
                             : "..."}
                         </p>
                       </div>
@@ -255,7 +309,7 @@ export default function Dashboard() {
 
                       <button
                         onClick={() => handleDelete(t.id)}
-                        className="p-2 opacity-0 group-hover:opacity-100 transition text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg"
+                        className="p-2 opacity-0 group-hover:opacity-100 transition cursor-pointer text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg"
                       >
                         <Trash2 size={18} />
                       </button>
@@ -273,7 +327,7 @@ export default function Dashboard() {
         whileTap={{ scale: 0.9 }}
         whileHover={{ scale: 1.08 }}
         onClick={() => setIsModalOpen(true)}
-        className="fixed bottom-8 right-8 bg-blue-600 text-white p-5 rounded-2xl shadow-2xl shadow-blue-200 z-50"
+        className="fixed bottom-8 right-8 bg-blue-600 text-white p-5 rounded-2xl shadow-2xl shadow-blue-200 z-50 cursor-pointer"
       >
         <Plus size={28} />
       </motion.button>
@@ -286,7 +340,7 @@ export default function Dashboard() {
   );
 }
 
-function PremiumCard({ title, value, icon, color, highlight, isPrivate }: any) {
+function PremiumCard({ title, value, icon, color, highlight, isPrivate, border }: any) {
   const colorMap: any = {
     green: "text-green-600",
     red: "text-red-600",
