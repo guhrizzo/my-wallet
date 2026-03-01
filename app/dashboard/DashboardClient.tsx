@@ -1,6 +1,3 @@
-
-
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -31,7 +28,7 @@ import {
     Calendar as CalendarIcon
 } from "lucide-react";
 import { signOut } from "firebase/auth";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation"; // Importado para navegação
 import { useAuth } from "@/context/AuthContext";
 import AddTransactionModal from "@/app/components/AddTransactionModal";
 import toast from "react-hot-toast";
@@ -57,7 +54,6 @@ export default function DashboardClient() {
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
 
-    // ESTADOS
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [isInitialLoading, setIsInitialLoading] = useState(true);
     const [isPrivate, setIsPrivate] = useState(false);
@@ -66,20 +62,17 @@ export default function DashboardClient() {
     const [filter, setFilter] = useState<"all" | "income" | "expense">("all");
     const [totals, setTotals] = useState({ income: 0, expense: 0, balance: 0 });
 
-    // 1. EFEITO PARA CARREGAR PREFERÊNCIA (Fix para Vercel/SSR)
     useEffect(() => {
         const saved = localStorage.getItem("privacy_mode");
         if (saved === "true") setIsPrivate(true);
     }, []);
 
-    // 2. REDIRECIONAMENTO SE NÃO LOGADO
     useEffect(() => {
         if (!authLoading && !user) {
             router.push("/");
         }
     }, [user, authLoading, router]);
 
-    // 3. BUSCA DE DADOS (FIREBASE)
     useEffect(() => {
         if (authLoading || !user) return;
 
@@ -120,7 +113,6 @@ export default function DashboardClient() {
         return () => unsubscribe();
     }, [user, authLoading, currentDate]);
 
-    // AÇÕES
     const togglePrivacy = () => {
         const newValue = !isPrivate;
         setIsPrivate(newValue);
@@ -157,11 +149,10 @@ export default function DashboardClient() {
 
     return (
         <div className="min-h-screen bg-slate-50 pb-24 antialiased selection:bg-blue-100">
-
             <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/80 border-b border-slate-200">
                 <div className="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
                     <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Bem-vindo</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Finanças de</p>
                         <h1 className="font-bold text-lg text-slate-800 leading-tight">
                             {user?.email?.split("@")[0]}
                         </h1>
@@ -185,8 +176,7 @@ export default function DashboardClient() {
             </header>
 
             <main className="max-w-5xl mx-auto p-6 space-y-6">
-
-
+                {/* SELETOR DE MÊS */}
                 <section className="bg-white rounded-4xl p-4 shadow-sm border border-slate-200 flex items-center justify-between">
                     <button
                         onClick={() => setCurrentDate(subMonths(currentDate, 1))}
@@ -212,7 +202,6 @@ export default function DashboardClient() {
                     </button>
                 </section>
 
-
                 <section className="grid md:grid-cols-3 gap-6">
                     <PremiumCard
                         title="Saldo Total"
@@ -236,7 +225,6 @@ export default function DashboardClient() {
                         isPrivate={isPrivate}
                     />
                 </section>
-
 
                 <section className="bg-white rounded-[2.5rem] shadow-sm border border-slate-200 overflow-hidden">
                     <div className="p-8 flex flex-col sm:flex-row justify-between items-center gap-6 border-b border-slate-50">
@@ -269,10 +257,10 @@ export default function DashboardClient() {
                                     animate={{ opacity: 1 }}
                                     className="py-24 text-center flex flex-col items-center gap-4"
                                 >
-                                    <div className="p-6 bg-slate-50 rounded-full text-slate-200">
+                                    <div className="p-6 bg-slate-100 rounded-full border border-slate-200/50 text-slate-300">
                                         <History size={48} />
                                     </div>
-                                    <p className="text-slate-400 font-bold text-lg tracking-tight">Nenhuma movimentação aqui.</p>
+                                    <p className="text-slate-400 font-bold text-lg tracking-tight">Nenhuma movimentação neste mês.</p>
                                 </motion.div>
                             ) : (
                                 filteredTransactions.map((t) => (
@@ -282,7 +270,9 @@ export default function DashboardClient() {
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, scale: 0.98 }}
                                         key={t.id}
-                                        className="p-6 flex justify-between items-center hover:bg-slate-50/50 transition-all group"
+                                        // ✅ NAVEGAÇÃO AO CLICAR NO CARD
+                                        onClick={() => router.push(`/dashboard/${t.id}`)}
+                                        className="p-6 flex justify-between items-center hover:bg-slate-50/80 transition-all group cursor-pointer active:scale-[0.99]"
                                     >
                                         <div className="flex items-center gap-5">
                                             <div className={`p-4 rounded-2xl border ${t.type === 'income' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
@@ -291,9 +281,9 @@ export default function DashboardClient() {
                                             <div>
                                                 <p className="font-bold text-slate-800 tracking-tight">{t.description}</p>
                                                 <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5">
-                                                    {t.date?.seconds
+                                                    {t.date && t.date.seconds
                                                         ? format(new Date(t.date.seconds * 1000), "dd 'de' MMMM", { locale: ptBR })
-                                                        : "Processando..."}
+                                                        : "Data indisponível"}
                                                 </p>
                                             </div>
                                         </div>
@@ -305,7 +295,10 @@ export default function DashboardClient() {
                                             </span>
 
                                             <button
-                                                onClick={() => handleDelete(t.id)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation(); // ✅ IMPEDE DE ABRIR A PÁGINA DE DETALHES AO EXCLUIR
+                                                    handleDelete(t.id);
+                                                }}
                                                 className="p-2.5 opacity-0 group-hover:opacity-100 transition-all cursor-pointer text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl active:scale-90"
                                             >
                                                 <Trash2 size={18} />
@@ -318,7 +311,6 @@ export default function DashboardClient() {
                     </div>
                 </section>
             </main>
-
 
             <motion.button
                 whileTap={{ scale: 0.9 }}

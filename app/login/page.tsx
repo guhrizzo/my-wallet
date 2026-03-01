@@ -1,10 +1,22 @@
-
 "use client";
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { 
+    signInWithEmailAndPassword, 
+    GoogleAuthProvider, 
+    signInWithPopup 
+} from "firebase/auth"; // Importamos os métodos do Google
 import { auth } from "@/lib/firebase";
-import { LogIn, Mail, Lock, Loader2, Eye, EyeOff, Wallet2 } from "lucide-react";
+import { 
+    LogIn, 
+    Mail, 
+    Lock, 
+    Loader2, 
+    Eye, 
+    EyeOff, 
+    Wallet2 
+} from "lucide-react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast"; // Opcional, mas recomendado para feedback
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -15,6 +27,23 @@ export default function LoginPage() {
 
     const router = useRouter();
 
+    // ✅ Função para Login com Google
+    const handleGoogleLogin = async () => {
+        setIsLoading(true);
+        setError("");
+        const provider = new GoogleAuthProvider();
+
+        try {
+            await signInWithPopup(auth, provider);
+            router.push("/dashboard");
+        } catch (err: any) {
+            console.error(err);
+            setError("Falha ao autenticar com o Google.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
@@ -24,7 +53,6 @@ export default function LoginPage() {
             await signInWithEmailAndPassword(auth, email, password);
             router.push("/dashboard");
         } catch (err: any) {
-            // Tradução simples de erros comuns do Firebase
             if (err.code === 'auth/invalid-credential') {
                 setError("E-mail ou senha incorretos.");
             } else {
@@ -37,9 +65,7 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] p-4">
-
             <div className="max-w-112.5 w-full space-y-8">
-
                 <div className="text-center space-y-2">
                     <div className="inline-flex p-3 bg-blue-600 rounded-2xl shadow-lg shadow-blue-200 mb-2">
                         <Wallet2 className="text-white w-8 h-8" />
@@ -52,9 +78,29 @@ export default function LoginPage() {
                     </p>
                 </div>
 
-                <div className="bg-white p-8 rounded-4xl shadow-xl shadow-slate-200/50 border border-slate-100">
-                    <form onSubmit={handleLogin} className="space-y-5">
+                <div className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100">
+                    
+                    {/* Botão do Google */}
+                    <button
+                        onClick={handleGoogleLogin}
+                        disabled={isLoading}
+                        type="button"
+                        className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 py-3.5 rounded-xl font-bold text-slate-700 hover:bg-slate-50 active:scale-[0.98] transition-all mb-6 cursor-pointer disabled:opacity-70"
+                    >
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
+                        Entrar com Google
+                    </button>
 
+                    <div className="relative mb-6">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-slate-100"></div>
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-white px-2 text-slate-400 font-medium">Ou use seu e-mail</span>
+                        </div>
+                    </div>
+
+                    <form onSubmit={handleLogin} className="space-y-5">
                         {error && (
                             <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl text-center animate-in fade-in zoom-in duration-300">
                                 {error}
@@ -128,4 +174,4 @@ export default function LoginPage() {
             </div>
         </div>
     );
-} 
+}

@@ -18,3 +18,22 @@ body {
   font-family: var(--font-poppins), var(--font-sans), -apple-system, BlinkMacSystemFont, sans-serif;
 
 }
+
+/* 🔥 Hide scrollbar premium */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* 🚀 Momentum scroll mobile */
+.overscroll-contain {
+  -webkit-overflow-scrolling: touch;
+}
+
+:root {
+  color-scheme: light;
+}
