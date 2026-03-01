@@ -55,7 +55,6 @@ export default function AddTransactionModal({ isOpen, onClose }: Props) {
 
   // ESC CLOSE
   useEffect(() => {
-    if (typeof window === "undefined") return;
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
@@ -87,19 +86,16 @@ export default function AddTransactionModal({ isOpen, onClose }: Props) {
     const user = auth.currentUser;
     if (!user) {
       toast.error("Usuário não autenticado");
-      navigator.vibrate?.(80);
       return;
     }
 
     if (!description.trim()) {
       toast.error("Digite uma descrição");
-      navigator.vibrate?.(80);
       return;
     }
 
     if (numericAmount <= 0) {
       toast.error("Insira um valor maior que zero");
-      navigator.vibrate?.(80);
       return;
     }
 
@@ -124,14 +120,9 @@ export default function AddTransactionModal({ isOpen, onClose }: Props) {
     } catch (error) {
       console.error(error);
       toast.error("Erro ao salvar.");
-      navigator.vibrate?.(120);
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) onClose();
   };
 
   const headerGradient =
@@ -143,27 +134,36 @@ export default function AddTransactionModal({ isOpen, onClose }: Props) {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          onMouseDown={handleBackdropClick}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4"
+          onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-end sm:items-center justify-center"
         >
+          {/* SHEET */}
           <motion.div
             drag="y"
             dragConstraints={{ top: 0, bottom: 0 }}
-            onDragEnd={(e, info) => {
-              if (info.offset.y > 120) onClose();
-            }}
-            initial={{ scale: 0.9, opacity: 0, y: 40 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.92, opacity: 0, y: 20 }}
+            onDragEnd={(_, info) => info.offset.y > 120 && onClose()}
+            initial={{ y: 80, opacity: 0, scale: 0.96 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: 60, opacity: 0 }}
             transition={{ type: "spring", stiffness: 260, damping: 24 }}
-            className="bg-white dark:bg-zinc-900 w-full max-w-md rounded-[2.5rem] shadow-[0_25px_70px_rgba(0,0,0,0.25)] overflow-hidden max-h-[92vh] flex flex-col"
+            className="
+              w-full sm:max-w-md
+              h-dvh sm:h-auto
+              bg-white dark:bg-zinc-900
+              sm:rounded-[2.5rem]
+              shadow-[0_25px_70px_rgba(0,0,0,0.25)]
+              flex flex-col overflow-hidden
+            "
           >
+            {/* DRAG HANDLE (mobile) */}
+            
+
             {/* HEADER */}
             <div
-              className={`relative p-6 text-white bg-linear-to-r ${headerGradient}`}
+              className={`sticky h-54 z-20 p-6 text-white bg-linear-to-r ${headerGradient}`}
             >
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-black tracking-tight">
@@ -172,37 +172,44 @@ export default function AddTransactionModal({ isOpen, onClose }: Props) {
 
                 <button
                   onClick={onClose}
-                  className="p-2 cursor-pointer rounded-full bg-white/20 hover:bg-white/30 transition"
+                  className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition"
                 >
                   <X size={18} />
                 </button>
               </div>
 
-              {/* VALOR HERO */}
+              {/* VALOR */}
               <div className="mt-6 text-center">
                 <div className="text-sm opacity-80 font-semibold mb-1">
                   Valor
                 </div>
 
-                <motion.input
-                  key={type}
-                  initial={{ scale: 0.9, opacity: 0.6 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  type="text"
-                  inputMode="numeric"
-                  value={displayAmount}
-                  onChange={handleAmountChange}
-                  className="w-full bg-transparent text-center text-5xl font-black outline-none"
-                />
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-xl font-bold opacity-80">R$</span>
 
-                <div className="text-xs opacity-80 mt-1">BRL</div>
+                  <motion.input
+                    key={type}
+                    initial={{ scale: 0.9, opacity: 0.6 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    type="text"
+                    inputMode="numeric"
+                    value={displayAmount}
+                    onChange={handleAmountChange}
+                    className="bg-transparent text-center text-5xl font-black outline-none w-55"
+                  />
+                </div>
               </div>
             </div>
 
-            {/* BODY SCROLL INSANO */}
+            {/* BODY */}
             <form
               onSubmit={handleSubmit}
-              className="relative p-6 space-y-5 overflow-y-auto scrollbar-hide overscroll-contain"
+              className="
+                flex-1 overflow-y-auto
+                p-5 sm:p-6
+                space-y-5
+                overscroll-contain
+              "
             >
               {/* TOGGLE */}
               <div className="relative flex bg-slate-100 dark:bg-zinc-800 p-1.5 rounded-2xl">
@@ -244,23 +251,14 @@ export default function AddTransactionModal({ isOpen, onClose }: Props) {
               </div>
 
               {/* DESCRIÇÃO */}
-              <div className="space-y-1">
-                <label className="text-sm font-bold text-slate-700 dark:text-zinc-300 ml-1">
-                  Descrição
-                </label>
-                <div className="relative">
-                  <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-                  <input
-                    autoFocus
-                    type="text"
-                    required
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Ex: Mercado, salário..."
-                    className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-zinc-800 rounded-2xl font-medium outline-none focus:ring-2 focus:ring-blue-500/20"
-                  />
-                </div>
-              </div>
+              <InputField
+                label="Descrição"
+                icon={<Tag className="w-5 h-5" />}
+                value={description}
+                onChange={setDescription}
+                placeholder="Ex: Mercado, salário..."
+                autoFocus
+              />
 
               {/* CATEGORIAS */}
               <div className="space-y-2">
@@ -276,11 +274,15 @@ export default function AddTransactionModal({ isOpen, onClose }: Props) {
                         key={cat.id}
                         type="button"
                         onClick={() => setCategory(cat.id)}
-                        className={`p-3 rounded-2xl text-sm font-semibold transition-all border ${
-                          active
-                            ? "bg-blue-50 border-blue-500 text-blue-600 scale-[1.05]"
-                            : "bg-slate-50 dark:bg-zinc-800 border-transparent text-slate-600"
-                        }`}
+                        className={`
+                          p-3 rounded-2xl text-sm font-semibold transition-all border
+                          min-h-18
+                          ${
+                            active
+                              ? "bg-blue-50 border-blue-500 text-blue-600 scale-[1.04]"
+                              : "bg-slate-50 dark:bg-zinc-800 border-transparent text-slate-600 hover:scale-[1.02]"
+                          }
+                        `}
                       >
                         <div className="text-lg">{cat.icon}</div>
                         <div>{cat.id}</div>
@@ -291,21 +293,13 @@ export default function AddTransactionModal({ isOpen, onClose }: Props) {
               </div>
 
               {/* DATA */}
-              <div className="space-y-1">
-                <label className="text-sm font-bold text-slate-700 dark:text-zinc-300 ml-1">
-                  Data
-                </label>
-                <div className="relative">
-                  <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-                  <input
-                    type="date"
-                    required
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-zinc-800 rounded-2xl outline-none"
-                  />
-                </div>
-              </div>
+              <InputField
+                label="Data"
+                type="date"
+                icon={<CalendarIcon className="w-5 h-5" />}
+                value={date}
+                onChange={setDate}
+              />
 
               {/* OBS */}
               <div className="space-y-1">
@@ -323,14 +317,16 @@ export default function AddTransactionModal({ isOpen, onClose }: Props) {
                   />
                 </div>
               </div>
+            </form>
 
-              {/* BOTÃO */}
+            {/* FOOTER STICKY */}
+            <div className="p-5 pt-3 pb-[calc(20px+env(safe-area-inset-bottom))] bg-white dark:bg-zinc-900 border-t border-zinc-100 dark:border-zinc-800">
               <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.96 }}
+                whileTap={{ scale: 0.97 }}
                 type="submit"
+                onClick={handleSubmit}
                 disabled={loading}
-                className={`w-full py-5 rounded-2xl font-black text-lg text-white shadow-lg flex items-center justify-center gap-2 ${
+                className={`w-full  py-5 rounded-2xl font-black text-lg text-white shadow-lg flex items-center justify-center gap-2 ${
                   type === "income"
                     ? "bg-green-600"
                     : "bg-red-600"
@@ -342,16 +338,47 @@ export default function AddTransactionModal({ isOpen, onClose }: Props) {
                   "Salvar Lançamento"
                 )}
               </motion.button>
-
-              {/* 🔥 FADE TOP */}
-              <div className="pointer-events-none sticky top-0 h-6 bg-linear-to-b from-white dark:from-zinc-900 to-transparent z-10" />
-
-              {/* 🔥 FADE BOTTOM */}
-              <div className="pointer-events-none sticky bottom-0 h-10 bg-linear-to-t from-white dark:from-zinc-900 to-transparent z-10" />
-            </form>
+            </div>
           </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+/* 🔥 INPUT PADRÃO REUTILIZÁVEL */
+function InputField({
+  label,
+  icon,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  autoFocus,
+}: any) {
+  return (
+    <div className="space-y-1">
+      <label className="text-sm font-bold text-slate-700 dark:text-zinc-300 ml-1">
+        {label}
+      </label>
+      <div className="relative">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+          {icon}
+        </div>
+        <input
+          autoFocus={autoFocus}
+          type={type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="
+            w-full pl-12 pr-4 py-4
+            bg-slate-50 dark:bg-zinc-800
+            rounded-2xl font-medium outline-none
+            focus:ring-2 focus:ring-blue-500/20
+          "
+        />
+      </div>
+    </div>
   );
 }
