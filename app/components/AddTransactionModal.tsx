@@ -1,4 +1,8 @@
-"use client";
+
+
+{/*
+    
+    "use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { db, auth } from "@/lib/firebase";
@@ -130,7 +134,7 @@ export default function AddTransactionModal({ isOpen, onClose }: Props) {
             transition={{ type: "spring", stiffness: 260, damping: 22 }}
             className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden"
           >
-            {/* Header */}
+            
             <div className="p-6 flex justify-between items-center border-b border-slate-50">
               <h2 className="text-xl font-bold text-slate-800">
                 Novo Lançamento
@@ -145,7 +149,7 @@ export default function AddTransactionModal({ isOpen, onClose }: Props) {
             </div>
 
             <form onSubmit={handleSubmit} className="p-8 space-y-6">
-              {/* Tipo */}
+              
               <div className="flex bg-slate-100 p-1.5 rounded-2xl gap-1">
                 <button
                   type="button"
@@ -174,7 +178,6 @@ export default function AddTransactionModal({ isOpen, onClose }: Props) {
                 </button>
               </div>
 
-              {/* Valor */}
               <div className="space-y-2">
                 <label className="text-sm font-bold text-slate-700 ml-1">
                   Valor
@@ -195,7 +198,7 @@ export default function AddTransactionModal({ isOpen, onClose }: Props) {
                 </div>
               </div>
 
-              {/* Descrição */}
+              
               <div className="space-y-2">
                 <label className="text-sm font-bold text-slate-700 ml-1">
                   O que é?
@@ -215,7 +218,7 @@ export default function AddTransactionModal({ isOpen, onClose }: Props) {
                 </div>
               </div>
 
-              {/* Submit */}
+              
               <button
                 type="submit"
                 disabled={loading}
@@ -238,3 +241,6 @@ export default function AddTransactionModal({ isOpen, onClose }: Props) {
     </AnimatePresence>
   );
 }
+    
+    
+    */}
