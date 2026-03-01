@@ -151,7 +151,7 @@ export default function AddTransactionModal({ isOpen, onClose }: Props) {
             transition={{ type: "spring", stiffness: 260, damping: 24 }}
             className="
               w-full sm:max-w-md
-              h-dvh sm:h-auto
+              h-dvh lg:h-[94dvh] sm:h-auto
               bg-white dark:bg-zinc-900
               sm:rounded-[2.5rem]
               shadow-[0_25px_70px_rgba(0,0,0,0.25)]
@@ -163,7 +163,7 @@ export default function AddTransactionModal({ isOpen, onClose }: Props) {
 
             {/* HEADER */}
             <div
-              className={`sticky h-54 z-20 p-6 text-white bg-linear-to-r ${headerGradient}`}
+              className={`sticky lg:h-auto h-54 z-20 p-6 text-white bg-linear-to-r ${headerGradient}`}
             >
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-black tracking-tight">
@@ -172,7 +172,7 @@ export default function AddTransactionModal({ isOpen, onClose }: Props) {
 
                 <button
                   onClick={onClose}
-                  className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition"
+                  className="p-2 rounded-full bg-white/20 hover:bg-white/30 cursor-pointer transition"
                 >
                   <X size={18} />
                 </button>

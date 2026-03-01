@@ -191,7 +191,7 @@ export default function TransactionDetails() {
     <div className="min-h-screen bg-slate-50 p-6">
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex justify-between items-center">
-          <button onClick={() => router.back()} className="flex items-center gap-2 text-slate-500 font-bold hover:text-slate-800">
+          <button onClick={() => router.back()} className="flex items-center gap-2 text-slate-500 cursor-pointer font-bold hover:text-slate-800">
             <ChevronLeft size={20} /> Voltar
           </button>
           <button

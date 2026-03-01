@@ -44,7 +44,7 @@ export default function PublicVerification() {
   const isIncome = transaction.type === "income";
 
   return (
-    <div className="min-h-screen bg-blue-600 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-[2.5rem] shadow-2xl overflow-hidden">
         {/* Banner de Status */}
         <div className={`p-6 text-center ${isIncome ? "bg-green-500" : "bg-blue-800"} text-white`}>
