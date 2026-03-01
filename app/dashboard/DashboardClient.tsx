@@ -154,7 +154,7 @@ return (
                 <div className="max-w-5xl mx-auto px-4 md:px-6 py-3 md:py-4 flex justify-between items-center">
                     <div>
                         <p className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Finanças de</p>
-                        <h1 className="font-bold text-base md:text-lg text-slate-800 leading-tight truncate max-w-[150px]">
+                        <h1 className="font-bold text-base md:text-lg text-slate-800 leading-tight truncate max-w-37.5">
                             {user?.email?.split("@")[0]}
                         </h1>
                     </div>
@@ -227,7 +227,7 @@ return (
                 </section>
 
                 {/* LISTA DE TRANSAÇÕES */}
-                <section className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-slate-200 overflow-hidden">
+                <section className="bg-white rounded-4xl md:rounded-[2.5rem] shadow-sm border border-slate-200 overflow-hidden">
                     <div className="p-5 md:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-50">
                         <h3 className="font-black text-slate-800 flex gap-2 items-center tracking-tight text-sm md:text-base">
                             <History size={18} className="text-blue-600" />
