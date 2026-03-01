@@ -13,7 +13,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // O Firebase checa automaticamente se o usuário tem um token salvo no navegador
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
@@ -23,7 +22,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ user, loading }}>
-      {children}
+      {/* Evitamos renderizar os filhos enquanto o Firebase está checando o login inicial.
+         Isso impede que o usuário veja a página de login se ele já estiver logado.
+      */}
+      {!loading ? children : (
+        <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
+           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-blue-600"></div>
+        </div>
+      )}
     </AuthContext.Provider>
   );
 }
