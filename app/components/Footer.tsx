@@ -1,4 +1,7 @@
-"use client";
+
+
+{/*
+    "use client";
 
 import { Wallet2, Github, Linkedin, Heart, ArrowUpRight } from "lucide-react";
 import { motion } from "framer-motion";
@@ -8,7 +11,7 @@ export default function Footer() {
 
   return (
     <footer className="w-full mt-auto relative overflow-hidden">
-      {/* glow background */}
+      
       <div className="absolute inset-0 bg-linear-to-br from-slate-50 via-white to-slate-100" />
       <div className="absolute -top-32 -right-32 w-72 h-72 bg-blue-200/30 blur-3xl rounded-full" />
       <div className="absolute -bottom-32 -left-32 w-72 h-72 bg-indigo-200/30 blur-3xl rounded-full" />
@@ -16,7 +19,7 @@ export default function Footer() {
       <div className="relative max-w-6xl mx-auto px-6 py-14">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 items-start">
           
-          {/* BRAND */}
+          
           <div className="space-y-5 text-center md:text-left">
             <motion.div
               whileHover={{ scale: 1.05 }}
@@ -36,13 +39,13 @@ export default function Footer() {
               Transforme seus números em decisões melhores.
             </p>
 
-            {/* trust badge */}
+            
             <div className="flex items-center justify-center md:justify-start gap-2 text-xs text-slate-400 font-semibold">
               Feito com <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500" /> para quem quer evoluir financeiramente
             </div>
           </div>
 
-          {/* LINKS */}
+         
           <div className="flex flex-col items-center md:items-center gap-4">
             <h4 className="text-slate-800 font-bold text-sm uppercase tracking-widest">
               Produto
@@ -68,7 +71,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* SOCIAL */}
+          
           <div className="flex flex-col items-center md:items-end gap-5">
             <h4 className="text-slate-800 font-bold text-sm uppercase tracking-widest">
               Conecte-se
@@ -90,7 +93,7 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* bottom */}
+       
         <div className="mt-14 pt-8 border-t border-slate-200/60 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-slate-400 text-xs font-semibold">
             © {currentYear} MyWallet. Todos os direitos reservados.
@@ -135,3 +138,4 @@ function SocialButton({ children, href }: any) {
     </motion.a>
   );
 }
+    */}
