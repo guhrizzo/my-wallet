@@ -14,8 +14,11 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "MyWallet - Minhas Finanças",
   description: "Gerenciador de carteira pessoal",
-  metadataBase: new URL("https://wallet.gustavorizzo.net.br")
+  metadataBase: new URL("https://wallet.gustavorizzo.net.br"),
+  manifest: "/manifest.json",
 };
+
+
 
 export default function RootLayout({
   children,
