@@ -1,4 +1,7 @@
-"use client";
+
+
+{/*
+    "use client";
 
 import {
   ResponsiveContainer,
@@ -93,3 +96,4 @@ export default function FinanceChart({ transactions, isPrivate }: Props) {
     </motion.div>
   );
 }
+*/}
