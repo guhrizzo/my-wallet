@@ -1,4 +1,7 @@
-"use client";
+
+
+{/*
+   "use client";
 import { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -36,7 +39,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] p-4">
-      {/* Container Principal com Grid para um look mais Premium em telas grandes */}
+      
       <div className="max-w-112.5 w-full space-y-8">
         
         <div className="text-center space-y-2">
@@ -127,4 +130,5 @@ export default function LoginPage() {
       </div>
     </div>
   );
-}
+} 
+    */}
