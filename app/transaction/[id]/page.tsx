@@ -44,13 +44,13 @@ export default function PublicVerification() {
   const isIncome = transaction.type === "income";
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50/60 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-[2.5rem] shadow-2xl overflow-hidden">
         {/* Banner de Status */}
         <div className={`p-6 text-center ${isIncome ? "bg-green-500" : "bg-blue-800"} text-white`}>
           <ShieldCheck size={48} className="mx-auto mb-2 opacity-90" />
           <h2 className="text-xl font-bold">Transação Autêntica</h2>
-          <p className="text-sm opacity-80">Verificado via FinanceApp</p>
+          <p className="text-sm">Verificado via FinanceApp</p>
         </div>
 
         <div className="p-8">
