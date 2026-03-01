@@ -52,46 +52,34 @@ interface Transaction {
 
 export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [currentDate, setCurrentDate] = useState(new Date()); // Estado para a data atual
-  
-  const [totals, setTotals] = useState({
-    income: 0,
-    expense: 0,
-    balance: 0,
-  });
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [filter, setFilter] = useState<"all" | "income" | "expense">("all");
   const router = useRouter();
 
+  // ESTADOS
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isPrivate, setIsPrivate] = useState(false); 
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [filter, setFilter] = useState<"all" | "income" | "expense">("all");
+  const [totals, setTotals] = useState({ income: 0, expense: 0, balance: 0 });
+
+  // 1. EFEITO PARA CARREGAR PREFERÊNCIA (Fix para Vercel/SSR)
   useEffect(() => {
     const saved = localStorage.getItem("privacy_mode");
-    if (saved) setIsPrivate(saved === "true");
+    if (saved === "true") setIsPrivate(true);
   }, []);
 
-  const togglePrivacy = () => {
-    const newValue = !isPrivate;
-    setIsPrivate(newValue);
-    localStorage.setItem("privacy_mode", newValue.toString());
-    toast(newValue ? "Valores ocultos" : "Valores visíveis", { 
-      icon: newValue ? <EyeOff size={16} /> : <Eye size={16} /> 
-    });
-  };
-
-  // Funções para navegar entre os meses
-  const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
-  const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
-
+  // 2. REDIRECIONAMENTO SE NÃO LOGADO
   useEffect(() => {
-    if (authLoading) return;
-    if (!user) {
+    if (!authLoading && !user) {
       router.push("/");
-      return;
     }
+  }, [user, authLoading, router]);
 
-    // Definir início e fim do mês selecionado
+  // 3. BUSCA DE DADOS (FIREBASE)
+  useEffect(() => {
+    if (authLoading || !user) return;
+
     const start = startOfMonth(currentDate);
     const end = endOfMonth(currentDate);
 
@@ -103,39 +91,46 @@ export default function Dashboard() {
       orderBy("date", "desc")
     );
 
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const data = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Transaction[];
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Transaction[];
 
-        setTransactions(data);
+      setTransactions(data);
 
-        const inc = data
-          .filter((t) => t.type === "income")
-          .reduce((acc, t) => acc + t.amount, 0);
+      const inc = data
+        .filter((t) => t.type === "income")
+        .reduce((acc, t) => acc + t.amount, 0);
 
-        const exp = data
-          .filter((t) => t.type === "expense")
-          .reduce((acc, t) => acc + t.amount, 0);
+      const exp = data
+        .filter((t) => t.type === "expense")
+        .reduce((acc, t) => acc + t.amount, 0);
 
-        setTotals({ income: inc, expense: exp, balance: inc - exp });
-        setIsInitialLoading(false);
-      },
-      () => setIsInitialLoading(false)
-    );
+      setTotals({ income: inc, expense: exp, balance: inc - exp });
+      setIsInitialLoading(false);
+    }, (error) => {
+      console.error("Erro no Firebase:", error);
+      setIsInitialLoading(false);
+    });
 
     return () => unsubscribe();
-  }, [user, authLoading, router, currentDate]); // Adicionado currentDate como dependência
+  }, [user, authLoading, currentDate]);
+
+  // AÇÕES
+  const togglePrivacy = () => {
+    const newValue = !isPrivate;
+    setIsPrivate(newValue);
+    localStorage.setItem("privacy_mode", newValue.toString());
+    toast.success(newValue ? "Valores ocultos" : "Valores visíveis");
+  };
 
   const handleDelete = async (id: string) => {
     try {
       await deleteDoc(doc(db, "transactions", id));
-      toast.success("Lançamento removido!");
+      toast.success("Removido com sucesso");
     } catch {
-      toast.error("Erro ao excluir.");
+      toast.error("Erro ao excluir");
     }
   };
 
@@ -150,7 +145,7 @@ export default function Dashboard() {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <motion.div
           animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 1 }}
+          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
           className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full"
         />
       </div>
@@ -158,13 +153,13 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24 antialiased">
+    <div className="min-h-screen bg-slate-50 pb-24 antialiased selection:bg-blue-100">
       {/* HEADER */}
-      <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/70 border-b border-slate-200">
+      <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/80 border-b border-slate-200">
         <div className="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
           <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-tight">Bem-vindo</p>
-            <h1 className="font-bold text-lg text-slate-800">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Bem-vindo</p>
+            <h1 className="font-bold text-lg text-slate-800 leading-tight">
               {user?.email?.split("@")[0]}
             </h1>
           </div>
@@ -172,13 +167,13 @@ export default function Dashboard() {
           <div className="flex items-center gap-2">
             <button
               onClick={togglePrivacy}
-              className="p-3 rounded-xl hover:bg-slate-100 text-slate-500 transition border cursor-pointer border-transparent hover:border-slate-200"
+              className="p-3 rounded-2xl hover:bg-slate-100 text-slate-500 transition-all cursor-pointer border border-transparent active:scale-95"
             >
               {isPrivate ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
             <button
               onClick={handleLogout}
-              className="p-3 rounded-xl hover:bg-red-50 text-red-500 cursor-pointer transition border border-transparent hover:border-red-100"
+              className="p-3 rounded-2xl hover:bg-red-50 text-red-500 cursor-pointer transition-all border border-transparent active:scale-95"
             >
               <LogOut size={20} />
             </button>
@@ -189,35 +184,35 @@ export default function Dashboard() {
       <main className="max-w-5xl mx-auto p-6 space-y-6">
         
         {/* SELETOR DE MÊS */}
-        <section className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200 flex items-center justify-between">
+        <section className="bg-white rounded-4xl p-4 shadow-sm border border-slate-200 flex items-center justify-between">
           <button 
-            onClick={prevMonth}
-            className="p-2 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer text-slate-400"
+            onClick={() => setCurrentDate(subMonths(currentDate, 1))}
+            className="p-3 hover:bg-slate-50 rounded-2xl transition-all cursor-pointer text-slate-400 active:scale-90"
           >
             <ChevronLeft size={24} />
           </button>
 
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+            <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
               <CalendarIcon size={20} />
             </div>
-            <span className="font-bold text-slate-800 text-lg capitalize">
+            <span className="font-black text-slate-800 text-base md:text-lg capitalize tracking-tight">
               {format(currentDate, "MMMM yyyy", { locale: ptBR })}
             </span>
           </div>
 
           <button 
-            onClick={nextMonth}
-            className="p-2 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer text-slate-400"
+            onClick={() => setCurrentDate(addMonths(currentDate, 1))}
+            className="p-3 hover:bg-slate-50 rounded-2xl transition-all cursor-pointer text-slate-400 active:scale-90"
           >
             <ChevronRight size={24} />
           </button>
         </section>
 
-        {/* CARDS */}
-        <section className="grid md:grid-cols-3 text-slate-950 gap-6">
+        {/* CARDS RESUMO */}
+        <section className="grid md:grid-cols-3 gap-6">
           <PremiumCard
-            title={`Saldo de ${format(currentDate, "MMMM", { locale: ptBR })}`}
+            title="Saldo Total"
             value={totals.balance}
             icon={<Wallet />}
             highlight
@@ -240,25 +235,25 @@ export default function Dashboard() {
         </section>
 
         {/* TRANSAÇÕES */}
-        <section className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-6 flex flex-col sm:flex-row justify-between items-center gap-4 border-b">
-            <h3 className="font-bold text-slate-800 flex gap-2 items-center">
-              <History size={18} />
+        <section className="bg-white rounded-[2.5rem] shadow-sm border border-slate-200 overflow-hidden">
+          <div className="p-8 flex flex-col sm:flex-row justify-between items-center gap-6 border-b border-slate-50">
+            <h3 className="font-black text-slate-800 flex gap-2 items-center tracking-tight">
+              <History size={20} className="text-blue-600" />
               Atividade do Mês
             </h3>
 
-            <div className="flex bg-slate-100 p-1 rounded-xl w-full sm:w-auto">
+            <div className="flex bg-slate-100 p-1.5 rounded-2xl w-full sm:w-auto">
               {(["all", "income", "expense"] as const).map((t) => (
                 <button
                   key={t}
                   onClick={() => setFilter(t)}
-                  className={`flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-xs font-bold transition ${
+                  className={`flex-1 sm:flex-none px-6 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
                     filter === t
-                      ? "bg-white shadow text-slate-900"
+                      ? "bg-white shadow-sm text-slate-900"
                       : "text-slate-400 hover:text-slate-600"
                   }`}
                 >
-                  {t === "all" ? "Tudo" : t === "income" ? "Entradas" : "Saídas"}
+                  {t === "all" ? "Tudo" : t === "income" ? "Ganhos" : "Gastos"}
                 </button>
               ))}
             </div>
@@ -270,12 +265,12 @@ export default function Dashboard() {
                 <motion.div 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="py-20 text-center flex flex-col items-center gap-3"
+                  className="py-24 text-center flex flex-col items-center gap-4"
                 >
-                  <div className="p-4 bg-slate-50 rounded-full text-slate-300">
-                    <History size={40} />
+                  <div className="p-6 bg-slate-50 rounded-full text-slate-200">
+                    <History size={48} />
                   </div>
-                  <p className="text-slate-400 font-semibold text-lg">Sem registros neste período</p>
+                  <p className="text-slate-400 font-bold text-lg tracking-tight">Nenhuma movimentação aqui.</p>
                 </motion.div>
               ) : (
                 filteredTransactions.map((t) => (
@@ -283,33 +278,33 @@ export default function Dashboard() {
                     layout
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
+                    exit={{ opacity: 0, scale: 0.98 }}
                     key={t.id}
-                    className="p-5 flex justify-between items-center hover:bg-slate-50 transition group"
+                    className="p-6 flex justify-between items-center hover:bg-slate-50/50 transition-all group"
                   >
-                    <div className="flex items-center gap-4">
-                       <div className={`p-3 rounded-xl ${t.type === 'income' ? 'bg-green-50 text-green-600 border border-green-300/40'  : 'bg-red-50 text-red-600 border border-red-100'}`}>
-                          {t.type === 'income' ? <TrendingUp size={18} className=""/> : <ArrowDownCircle size={18} />}
+                    <div className="flex items-center gap-5">
+                       <div className={`p-4 rounded-2xl border ${t.type === 'income' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
+                          {t.type === 'income' ? <TrendingUp size={20} /> : <ArrowDownCircle size={20} />}
                        </div>
                       <div>
-                        <p className="font-bold text-slate-800">{t.description}</p>
-                        <p className="text-xs text-slate-400 font-medium">
+                        <p className="font-bold text-slate-800 tracking-tight">{t.description}</p>
+                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5">
                           {t.date?.seconds
                             ? format(new Date(t.date.seconds * 1000), "dd 'de' MMMM", { locale: ptBR })
-                            : "..."}
+                            : "Processando..."}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                      <span className={`font-black text-lg ${t.type === "income" ? "text-green-600" : "text-red-600"}`}>
+                    <div className="flex items-center gap-6">
+                      <span className={`font-black text-lg tracking-tighter ${t.type === "income" ? "text-green-600" : "text-red-600"}`}>
                         {t.type === "income" ? "+" : "-"} 
                         {isPrivate ? " R$ ••••" : ` R$ ${t.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
                       </span>
 
                       <button
                         onClick={() => handleDelete(t.id)}
-                        className="p-2 opacity-0 group-hover:opacity-100 transition cursor-pointer text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg"
+                        className="p-2.5 opacity-0 group-hover:opacity-100 transition-all cursor-pointer text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl active:scale-90"
                       >
                         <Trash2 size={18} />
                       </button>
@@ -322,14 +317,14 @@ export default function Dashboard() {
         </section>
       </main>
 
-      {/* FAB */}
+      {/* FAB (Botão de Adicionar) */}
       <motion.button
         whileTap={{ scale: 0.9 }}
-        whileHover={{ scale: 1.08 }}
+        whileHover={{ scale: 1.05, y: -2 }}
         onClick={() => setIsModalOpen(true)}
-        className="fixed bottom-8 right-8 bg-blue-600 text-white p-5 rounded-2xl shadow-2xl shadow-blue-200 z-50 cursor-pointer"
+        className="fixed bottom-10 right-10 bg-blue-600 text-white p-5 rounded-4xl shadow-2xl shadow-blue-200 z-50 cursor-pointer flex items-center justify-center active:bg-blue-700 transition-colors"
       >
-        <Plus size={28} />
+        <Plus size={32} strokeWidth={3} />
       </motion.button>
 
       <AddTransactionModal
@@ -340,7 +335,7 @@ export default function Dashboard() {
   );
 }
 
-function PremiumCard({ title, value, icon, color, highlight, isPrivate, border }: any) {
+function PremiumCard({ title, value, icon, color, highlight, isPrivate }: any) {
   const colorMap: any = {
     green: "text-green-600",
     red: "text-red-600",
@@ -348,21 +343,23 @@ function PremiumCard({ title, value, icon, color, highlight, isPrivate, border }
 
   return (
     <motion.div
-      whileHover={{ y: -4 }}
-      className={`p-8 rounded-4xl border ${
+      whileHover={{ y: -6 }}
+      className={`p-8 rounded-[2.5rem] border transition-all ${
         highlight
-          ? "bg-slate-900 text-white border-transparent shadow-2xl shadow-slate-200"
+          ? "bg-slate-900 text-white border-transparent shadow-2xl shadow-slate-300"
           : "bg-white border-slate-200 shadow-sm"
       }`}
     >
-      <div className="flex justify-between mb-6">
-        <span className={`text-xs font-bold uppercase tracking-widest ${highlight ? "opacity-50" : "text-slate-400"}`}>
+      <div className="flex justify-between mb-8 items-start">
+        <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${highlight ? "opacity-50" : "text-slate-400"}`}>
           {title}
         </span>
-        <div className={highlight ? "text-blue-400" : "opacity-20"}>{icon}</div>
+        <div className={`p-2 rounded-xl ${highlight ? "bg-white/10 text-blue-400" : "bg-slate-50 text-slate-400 opacity-40"}`}>
+          {icon}
+        </div>
       </div>
 
-      <h2 className={`text-3xl font-black tracking-tight ${!highlight ? colorMap[color] : ""}`}>
+      <h2 className={`text-3xl font-black tracking-tighter ${!highlight ? colorMap[color] : ""}`}>
         {isPrivate ? "R$ ••••" : `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
       </h2>
     </motion.div>
