@@ -1,4 +1,7 @@
-"use client";
+
+/*
+    
+       "use client";
 
 import { useEffect, useState } from "react";
 import { auth, db } from "@/lib/firebase";
@@ -154,7 +157,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-24 antialiased selection:bg-blue-100">
-      {/* HEADER */}
+     
       <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/80 border-b border-slate-200">
         <div className="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
           <div>
@@ -183,7 +186,7 @@ export default function Dashboard() {
 
       <main className="max-w-5xl mx-auto p-6 space-y-6">
         
-        {/* SELETOR DE MÊS */}
+        
         <section className="bg-white rounded-4xl p-4 shadow-sm border border-slate-200 flex items-center justify-between">
           <button 
             onClick={() => setCurrentDate(subMonths(currentDate, 1))}
@@ -209,7 +212,7 @@ export default function Dashboard() {
           </button>
         </section>
 
-        {/* CARDS RESUMO */}
+      
         <section className="grid md:grid-cols-3 gap-6">
           <PremiumCard
             title="Saldo Total"
@@ -234,7 +237,7 @@ export default function Dashboard() {
           />
         </section>
 
-        {/* TRANSAÇÕES */}
+       
         <section className="bg-white rounded-[2.5rem] shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-8 flex flex-col sm:flex-row justify-between items-center gap-6 border-b border-slate-50">
             <h3 className="font-black text-slate-800 flex gap-2 items-center tracking-tight">
@@ -317,7 +320,7 @@ export default function Dashboard() {
         </section>
       </main>
 
-      {/* FAB (Botão de Adicionar) */}
+      
       <motion.button
         whileTap={{ scale: 0.9 }}
         whileHover={{ scale: 1.05, y: -2 }}
@@ -364,4 +367,6 @@ function PremiumCard({ title, value, icon, color, highlight, isPrivate }: any) {
       </h2>
     </motion.div>
   );
-}
+} 
+
+*/
