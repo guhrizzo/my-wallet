@@ -28,7 +28,7 @@ import {
     Calendar as CalendarIcon
 } from "lucide-react";
 import { signOut } from "firebase/auth";
-import { useRouter } from "next/navigation"; // Importado para navegação
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import AddTransactionModal from "@/app/components/AddTransactionModal";
 import toast from "react-hot-toast";
@@ -113,6 +113,10 @@ export default function DashboardClient() {
         return () => unsubscribe();
     }, [user, authLoading, currentDate]);
 
+    const changeMonth = (direction: number) => {
+        setCurrentDate(prev => direction > 0 ? addMonths(prev, 1) : subMonths(prev, 1));
+    };
+
     const togglePrivacy = () => {
         const newValue = !isPrivate;
         setIsPrivate(newValue);
@@ -147,9 +151,8 @@ export default function DashboardClient() {
         );
     }
 
-return (
-        <div className="min-h-screen bg-slate-50 pb-32 antialiased selection:bg-blue-100">
-            {/* Header: Ajuste de padding no mobile */}
+    return (
+        <div className="min-h-screen bg-slate-50 pb-32 antialiased selection:bg-blue-100 overflow-x-hidden">
             <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/80 border-b border-slate-200">
                 <div className="max-w-5xl mx-auto px-4 md:px-6 py-3 md:py-4 flex justify-between items-center">
                     <div>
@@ -170,12 +173,20 @@ return (
                 </div>
             </header>
 
-            <main className="max-w-5xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
+            {/* O "Pan" detector agora envolve todo o conteúdo principal */}
+            <motion.main 
+                onPanEnd={(_, info) => {
+                    const swipeThreshold = 80; // Sensibilidade do deslize
+                    if (info.offset.x > swipeThreshold) changeMonth(-1);
+                    else if (info.offset.x < -swipeThreshold) changeMonth(1);
+                }}
+                className="max-w-5xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6 touch-pan-y"
+            >
                 
-                {/* SELETOR DE MÊS: Mais compacto no mobile */}
+                {/* SELETOR DE MÊS */}
                 <section className="bg-white rounded-3xl md:rounded-4xl p-2 md:p-4 shadow-sm border border-slate-200 flex items-center justify-between">
                     <button
-                        onClick={() => setCurrentDate(subMonths(currentDate, 1))}
+                        onClick={() => changeMonth(-1)}
                         className="p-2 md:p-3 hover:bg-slate-50 rounded-xl transition-all cursor-pointer text-slate-400"
                     >
                         <ChevronLeft size={20} className="md:scale-125" />
@@ -191,118 +202,127 @@ return (
                     </div>
 
                     <button
-                        onClick={() => setCurrentDate(addMonths(currentDate, 1))}
+                        onClick={() => changeMonth(1)}
                         className="p-2 md:p-3 hover:bg-slate-50 rounded-xl transition-all cursor-pointer text-slate-400"
                     >
                         <ChevronRight size={20} className="md:scale-125" />
                     </button>
                 </section>
 
-                {/* CARDS: Grid de 1 coluna (mobile) e 3 colunas (desktop) */}
-                <section className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6">
-                    <PremiumCard
-                        title="Saldo Total"
-                        value={totals.balance}
-                        icon={<Wallet size={20} />}
-                        highlight
-                        isPrivate={isPrivate}
-                    />
-                    {/* Grid de 2 colunas lado a lado apenas em telas pequenas para economizar espaço vertical */}
-                    <div className="grid grid-cols-2 md:contents gap-3">
-                        <PremiumCard
-                            title="Entradas"
-                            value={totals.income}
-                            icon={<ArrowUpCircle size={20} />}
-                            color="green"
-                            isPrivate={isPrivate}
-                        />
-                        <PremiumCard
-                            title="Saídas"
-                            value={totals.expense}
-                            icon={<ArrowDownCircle size={20} />}
-                            color="red"
-                            isPrivate={isPrivate}
-                        />
-                    </div>
-                </section>
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={currentDate.toISOString()}
+                        initial={{ opacity: 0, x: 10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="space-y-4 md:space-y-6"
+                    >
+                        {/* CARDS */}
+                        <section className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6">
+                            <PremiumCard
+                                title="Saldo Total"
+                                value={totals.balance}
+                                icon={<Wallet size={20} />}
+                                highlight
+                                isPrivate={isPrivate}
+                            />
+                            <div className="grid grid-cols-2 md:contents gap-3">
+                                <PremiumCard
+                                    title="Entradas"
+                                    value={totals.income}
+                                    icon={<ArrowUpCircle size={20} />}
+                                    color="green"
+                                    isPrivate={isPrivate}
+                                />
+                                <PremiumCard
+                                    title="Saídas"
+                                    value={totals.expense}
+                                    icon={<ArrowDownCircle size={20} />}
+                                    color="red"
+                                    isPrivate={isPrivate}
+                                />
+                            </div>
+                        </section>
 
-                {/* LISTA DE TRANSAÇÕES */}
-                <section className="bg-white rounded-4xl md:rounded-[2.5rem] shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="p-5 md:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-50">
-                        <h3 className="font-black text-slate-800 flex gap-2 items-center tracking-tight text-sm md:text-base">
-                            <History size={18} className="text-blue-600" />
-                            Atividade
-                        </h3>
+                        {/* LISTA DE TRANSAÇÕES */}
+                        <section className="bg-white rounded-4xl md:rounded-[2.5rem] shadow-sm border border-slate-200 overflow-hidden">
+                            <div className="p-5 md:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-50">
+                                <h3 className="font-black text-slate-800 flex gap-2 items-center tracking-tight text-sm md:text-base">
+                                    <History size={18} className="text-blue-600" />
+                                    Atividade
+                                </h3>
 
-                        {/* Filtros agora fazem scroll lateral no mobile se necessário */}
-                        <div className="flex bg-slate-100 p-1 rounded-xl md:rounded-2xl w-full sm:w-auto overflow-x-auto no-scrollbar">
-                            {(["all", "income", "expense"] as const).map((t) => (
-                                <button
-                                    key={t}
-                                    onClick={() => setFilter(t)}
-                                    className={`flex-1 sm:flex-none whitespace-nowrap px-4 md:px-6 py-2 rounded-lg md:rounded-xl text-[10px] md:text-xs font-black transition-all cursor-pointer ${filter === t
-                                            ? "bg-white shadow-sm text-slate-900"
-                                            : "text-slate-400"
-                                        }`}
-                                >
-                                    {t === "all" ? "Tudo" : t === "income" ? "Ganhos" : "Gastos"}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="divide-y divide-slate-50">
-                        <AnimatePresence mode="popLayout">
-                            {filteredTransactions.length === 0 ? (
-                                <div className="py-16 md:py-24 text-center flex flex-col items-center gap-3 px-6">
-                                    <History size={40} className="text-slate-200" />
-                                    <p className="text-slate-400 font-bold text-sm">Sem movimentações.</p>
+                                <div className="flex bg-slate-100 p-1 rounded-xl md:rounded-2xl w-full sm:w-auto overflow-x-auto no-scrollbar">
+                                    {(["all", "income", "expense"] as const).map((t) => (
+                                        <button
+                                            key={t}
+                                            onClick={(e) => {
+                                                e.stopPropagation(); // Evita conflito com o pan
+                                                setFilter(t);
+                                            }}
+                                            className={`flex-1 sm:flex-none whitespace-nowrap px-4 md:px-6 py-2 rounded-lg md:rounded-xl text-[10px] md:text-xs font-black transition-all cursor-pointer ${filter === t
+                                                    ? "bg-white shadow-sm text-slate-900"
+                                                    : "text-slate-400"
+                                                }`}
+                                        >
+                                            {t === "all" ? "Tudo" : t === "income" ? "Ganhos" : "Gastos"}
+                                        </button>
+                                    ))}
                                 </div>
-                            ) : (
-                                filteredTransactions.map((t) => (
-                                    <motion.div
-                                        layout
-                                        key={t.id}
-                                        onClick={() => router.push(`/dashboard/${t.id}`)}
-                                        className="p-4 md:p-6 flex justify-between items-center hover:bg-slate-50/80 active:bg-slate-100 transition-all group cursor-pointer"
-                                    >
-                                        <div className="flex items-center gap-3 md:gap-5">
-                                            {/* Ícone menor no mobile */}
-                                            <div className={`p-2.5 md:p-4 rounded-xl md:rounded-2xl border ${t.type === 'income' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
-                                                {t.type === 'income' ? <TrendingUp size={16} className="md:size-5" /> : <ArrowDownCircle size={16} className="md:size-5" />}
-                                            </div>
-                                            <div className="max-w-30 xs:max-w-none">
-                                                <p className="font-bold text-slate-800 text-sm md:text-base truncate">{t.description}</p>
-                                                <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-0.5">
-                                                    {t.date?.seconds ? format(new Date(t.date.seconds * 1000), "dd 'de' MMM", { locale: ptBR }) : "---"}
-                                                </p>
-                                            </div>
-                                        </div>
+                            </div>
 
-                                        <div className="flex items-center gap-3 md:gap-6">
-                                            <span className={`font-black text-sm md:text-lg tracking-tighter ${t.type === "income" ? "text-green-600" : "text-red-600"}`}>
-                                                {isPrivate ? "R$ ••••" : `${t.type === "income" ? "+" : "-"} R$ ${t.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
-                                            </span>
-                                            {/* Botão de excluir sempre visível no mobile para facilitar o toque */}
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDelete(t.id);
-                                                }}
-                                                className="p-2 text-slate-300 md:opacity-0 md:group-hover:opacity-100 hover:text-red-500 rounded-lg transition-all"
+                            <div className="divide-y divide-slate-50">
+                                <AnimatePresence mode="popLayout">
+                                    {filteredTransactions.length === 0 ? (
+                                        <div className="py-16 md:py-24 text-center flex flex-col items-center gap-3 px-6">
+                                            <History size={40} className="text-slate-200" />
+                                            <p className="text-slate-400 font-bold text-sm">Sem movimentações.</p>
+                                        </div>
+                                    ) : (
+                                        filteredTransactions.map((t) => (
+                                            <motion.div
+                                                layout
+                                                key={t.id}
+                                                onClick={() => router.push(`/dashboard/${t.id}`)}
+                                                className="p-4 md:p-6 flex justify-between items-center hover:bg-slate-50/80 active:bg-slate-100 transition-all group cursor-pointer"
                                             >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-                                    </motion.div>
-                                ))
-                            )}
-                        </AnimatePresence>
-                    </div>
-                </section>
-            </main>
+                                                <div className="flex items-center gap-3 md:gap-5">
+                                                    <div className={`p-2.5 md:p-4 rounded-xl md:rounded-2xl border ${t.type === 'income' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
+                                                        {t.type === 'income' ? <TrendingUp size={16} className="md:size-5" /> : <ArrowDownCircle size={16} className="md:size-5" />}
+                                                    </div>
+                                                    <div className="max-w-30 xs:max-w-none">
+                                                        <p className="font-bold text-slate-800 text-sm md:text-base truncate">{t.description}</p>
+                                                        <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-0.5">
+                                                            {t.date?.seconds ? format(new Date(t.date.seconds * 1000), "dd 'de' MMM", { locale: ptBR }) : "---"}
+                                                        </p>
+                                                    </div>
+                                                </div>
 
-            {/* Botão flutuante ajustado: centralizado ou no canto com mais margem */}
+                                                <div className="flex items-center gap-3 md:gap-6">
+                                                    <span className={`font-black text-sm md:text-lg tracking-tighter ${t.type === "income" ? "text-green-600" : "text-red-600"}`}>
+                                                        {isPrivate ? "R$ ••••" : `${t.type === "income" ? "+" : "-"} R$ ${t.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
+                                                    </span>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDelete(t.id);
+                                                        }}
+                                                        className="p-2 text-slate-300 md:opacity-0 md:group-hover:opacity-100 hover:text-red-500 rounded-lg transition-all"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            </motion.div>
+                                        ))
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        </section>
+                    </motion.div>
+                </AnimatePresence>
+            </motion.main>
+
             <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setIsModalOpen(true)}
@@ -316,12 +336,11 @@ return (
     );
 }
 
-// PREMIUM CARD AJUSTADO: Padding menor no mobile e fonte fluida
 function PremiumCard({ title, value, icon, color, highlight, isPrivate }: any) {
     const colorMap: any = { green: "text-green-600", red: "text-red-600" };
 
     return (
-        <motion.div
+        <div
             className={`p-5 md:p-8 rounded-[1.8rem] md:rounded-[2.5rem] border transition-all ${highlight
                     ? "bg-slate-900 text-white border-transparent shadow-xl md:shadow-2xl shadow-slate-300"
                     : "bg-white border-slate-200 shadow-sm"
@@ -339,6 +358,6 @@ function PremiumCard({ title, value, icon, color, highlight, isPrivate }: any) {
             <h2 className={`text-xl md:text-3xl font-black tracking-tighter truncate ${!highlight ? colorMap[color] : ""}`}>
                 {isPrivate ? "R$ ••••" : `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
             </h2>
-        </motion.div>
+        </div>
     );
 }
